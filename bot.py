@@ -77,16 +77,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
          InlineKeyboardButton("📞 联系客服", url="https://t.me/letianUSDT")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(
-        "乐天USDT —— 您的全能支付管家\n"
-        "我们以全行业USDT充值为基石，\n"
-        "以自动化代付为效率引擎，为您构建安全、稳定、\n"
-        "极速的一站式金融体验。\n"
-        "行业先锋，为效率而生。\n"
-        "诚招商户，代理加盟，\n"
-        "与我们共同“助跑”世界杯，共赢全球机遇！\n"
-        "点击下方商户跳转对应频道/群组\n\n"
-         reply_markup=reply_markup
+   await update.message.reply_text(
+        """乐天USDT —— 您的全能支付管家
+我们以全行业USDT充值为基石，
+以自动化代付为效率引擎，为您构建安全、稳定、
+极速的一站式金融体验。
+行业先锋，为效率而生。
+诚招商户，代理加盟，
+与我们共同“助跑”世界杯，共赢全球机遇！
+点击下方商户跳转对应频道/群组
+
+💬 私聊我并点击「AI 对话」后，即可随意聊天，我会调用 AI 回答你。
+👥 在群组中请使用 /ai 问题 来提问。""",
+        reply_markup=reply_markup
     )
 
 # ========== 回调处理（仅处理 AI 模式） ==========
