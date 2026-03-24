@@ -23,10 +23,10 @@ def get_user_id(update: Update) -> int:
         return update.callback_query.from_user.id
     return None
 
-# ========== AI 对话 ==========
+# ========== AI 对话（增强错误处理） ==========
 async def ai_chat(update: Update, context: ContextTypes.DEFAULT_TYPE, query: str):
     if not OPENAI_API_KEY:
-        await update.message.reply_text("⚠️ 未配置 OpenAI API Key，暂时无法使用 AI 功能。")
+        await update.message.reply_text("⚠️ AI 服务未配置，请联系我的主人。")
         return
     try:
         async with aiohttp.ClientSession() as session:
@@ -38,17 +38,33 @@ async def ai_chat(update: Update, context: ContextTypes.DEFAULT_TYPE, query: str
             }
             async with session.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers) as resp:
                 data = await resp.json()
+                # 检查是否有错误
+                if "error" in data:
+                    error = data["error"]
+                    error_code = error.get("code")
+                    error_msg = error.get("message", "")
+                    # 常见错误：额度不足、密钥无效等
+                    if error_code == "insufficient_quota" or "quota" in error_msg.lower():
+                        await update.message.reply_text("⚠️ AI 服务配额已用完，请联系我的主人补充。")
+                    else:
+                        await update.message.reply_text("⚠️ AI 服务暂时不可用，请联系我的主人。")
+                    return
                 reply = data["choices"][0]["message"]["content"]
                 await update.message.reply_text(reply)
+    except aiohttp.ClientError as e:
+        # 网络问题
+        await update.message.reply_text("⚠️ 网络连接异常，AI 服务暂时不可用，请联系我的主人。")
     except Exception as e:
-        await update.message.reply_text(f"AI 出错了：{str(e)}")
+        # 其他未知错误
+        logging.error(f"AI 调用异常: {e}")
+        await update.message.reply_text("⚠️ AI 服务暂时不可用，请联系我的主人。")
 
 # ========== 主菜单（广告按钮） ==========
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         # 新闻频道
-        [InlineKeyboardButton("📰 天游国际", url="t.me/tianyouguoji")],
-        # 娱乐城广告（可根据图片替换链接）
+        [InlineKeyboardButton("📰 天游国际", url="https://t.me/tianyouguoji")],
+        # 娱乐城广告
         [InlineKeyboardButton("天游国际", url="https://t.me/example1"),
          InlineKeyboardButton("天游国际", url="https://t.me/example2")],
         [InlineKeyboardButton("天游国际", url="https://t.me/example3"),
@@ -71,13 +87,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
          InlineKeyboardButton("天游国际", url="https://t.me/example20")],
         [InlineKeyboardButton("2028大额出款无忧", url="https://t.me/example21"),
          InlineKeyboardButton("7T.com全球公认最稳", url="https://t.me/example22")],
-        [InlineKeyboardButton("乐天USDT", url="t.me/ltusdt888")],
+        [InlineKeyboardButton("乐天USDT", url="https://t.me/ltusdt888")],
         # 功能按钮（AI + 客服）
         [InlineKeyboardButton("🤖 AI 对话", callback_data="ai_mode"),
          InlineKeyboardButton("📞 联系客服", url="https://t.me/letianUSDT")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-   await update.message.reply_text(
+    await update.message.reply_text(
         """乐天USDT —— 您的全能支付管家
 我们以全行业USDT充值为基石，
 以自动化代付为效率引擎，为您构建安全、稳定、
