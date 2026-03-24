@@ -51,7 +51,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # 第一行：新闻频道（单个按钮，居中）
         [InlineKeyboardButton("📰 天游国际", url="https://t.me/tianyouguoji")],
         # 两列广告按钮
-        [InlineKeyboardButton("天游国际", url="https://t.me/example1"),
+        [InlineKeyboardButton("天游六合彩", url="https://33.3627293.xyz"),
          InlineKeyboardButton("天游国际", url="https://t.me/example2")],
         [InlineKeyboardButton("天游国际", url="https://t.me/example3"),
          InlineKeyboardButton("天游国际", url="https://t.me/example4")],
