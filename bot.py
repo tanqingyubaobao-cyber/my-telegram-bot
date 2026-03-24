@@ -995,3 +995,6 @@ def main():
     app.add_error_handler(error_handler)
     print("🤖 机器人启动中...")
     app.run_polling()
+
+if __name__ == "__main__":
+    main()
