@@ -2,11 +2,10 @@
 """
 ================================================
    Telegram 全能机器人 - 乐天USDT
-   功能：广告按钮 + AI 智能对话
+   功能：广告按钮 + 帮助信息
    部署说明：
      1. 确保 Railway 环境变量中设置：
         - TELEGRAM_TOKEN（必填）
-        - OPENAI_API_KEY（可选，如需 AI）
      2. 确保 requirements.txt 包含：
         python-telegram-bot>=21.10
         aiohttp>=3.10.5
@@ -17,8 +16,6 @@
 """
 import os
 import logging
-import asyncio
-import aiohttp
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 
@@ -27,10 +24,6 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 # ========== 环境变量 ==========
 TOKEN = os.getenv("TELEGRAM_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-# ========== AI 对话状态 ==========
-ai_mode = {}  # {user_id: True}
 
 # ========== 辅助函数 ==========
 def get_user_id(update: Update) -> int:
@@ -40,45 +33,24 @@ def get_user_id(update: Update) -> int:
         return update.callback_query.from_user.id
     return None
 
-# ========== AI 对话（增强错误处理） ==========
-async def ai_chat(update: Update, context: ContextTypes.DEFAULT_TYPE, query: str):
-    if not OPENAI_API_KEY:
-        await update.message.reply_text("⚠️ AI 服务未配置，请联系我的主人。")
-        return
-    try:
-        async with aiohttp.ClientSession() as session:
-            headers = {"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"}
-            payload = {
-                "model": "gpt-3.5-turbo",
-                "messages": [{"role": "user", "content": query}],
-                "max_tokens": 500
-            }
-            async with session.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers) as resp:
-                data = await resp.json()
-                # 检查是否有错误
-                if "error" in data:
-                    error = data["error"]
-                    error_code = error.get("code")
-                    error_msg = error.get("message", "")
-                    if error_code == "insufficient_quota" or "quota" in error_msg.lower():
-                        await update.message.reply_text("⚠️ AI 服务配额已用完，请联系我的主人补充。")
-                    else:
-                        await update.message.reply_text("⚠️ AI 服务暂时不可用，请联系我的主人。")
-                    return
-                reply = data["choices"][0]["message"]["content"]
-                await update.message.reply_text(reply)
-    except aiohttp.ClientError:
-        await update.message.reply_text("⚠️ 网络连接异常，AI 服务暂时不可用，请联系我的主人。")
-    except Exception as e:
-        logging.error(f"AI 调用异常: {e}")
-        await update.message.reply_text("⚠️ AI 服务暂时不可用，请联系我的主人。")
-
-# ========== 主菜单（优化后的两列广告按钮布局） ==========
+# ========== 主菜单（广告按钮） ==========
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # 使用 Markdown 格式化欢迎文字
+    welcome_text = (
+        "*乐天USDT —— 您的全能支付管家*\n\n"
+        "我们以全行业USDT充值为基石，\n"
+        "以自动化代付为效率引擎，为您构建*安全、稳定、*\n"
+        "*极速的一站式金融体验*。\n\n"
+        "🌟 *行业先锋，为效率而生。*\n\n"
+        "🔥 诚招商户，代理加盟，\n"
+        "与我们共同“助跑”世界杯，共赢全球机遇！\n\n"
+        "👇 *点击下方商户跳转对应频道/群组* 👇"
+    )
+    
     keyboard = [
         # 第一行：新闻频道（单个按钮，居中）
         [InlineKeyboardButton("📰 天游国际", url="https://t.me/tianyouguoji")],
-        # 第二行开始两列排列
+        # 两列广告按钮
         [InlineKeyboardButton("天游国际", url="https://t.me/example1"),
          InlineKeyboardButton("天游国际", url="https://t.me/example2")],
         [InlineKeyboardButton("天游国际", url="https://t.me/example3"),
@@ -102,25 +74,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("乐天USDT", url="https://t.me/ltusdt888"),
          InlineKeyboardButton("乐天USDT", url="https://t.me/ltusdt888")],
         [InlineKeyboardButton("乐天USDT", url="https://t.me/ltusdt888")],
-        # 功能按钮（AI + 客服）
-        [InlineKeyboardButton("🤖 AI 对话", callback_data="ai_mode"),
+        # 功能按钮（帮助 + 客服）
+        [InlineKeyboardButton("📖 帮助", callback_data="help"),
          InlineKeyboardButton("📞 联系客服", url="https://t.me/letianUSDT")],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(
-        """乐天USDT —— 您的全能支付管家
-我们以全行业USDT充值为基石，
-以自动化代付为效率引擎，为您构建安全、稳定、
-极速的一站式金融体验。
-行业先锋，为效率而生。
-诚招商户，代理加盟，
-与我们共同“助跑”世界杯，共赢全球机遇！
-点击下方商户跳转对应频道/群组
-
-💬 私聊我并点击「AI 对话」后，即可随意聊天，我会调用 AI 回答你。
-👥 在群组中请使用 /ai 问题 来提问。""",
-        reply_markup=reply_markup
-    )
+    await update.message.reply_text(welcome_text, parse_mode="Markdown", reply_markup=reply_markup)
 
 # ========== 回调处理 ==========
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -128,45 +87,20 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     data = query.data
     await query.answer()
 
-    if data == "ai_mode":
-        user_id = get_user_id(update)
-        if user_id:
-            ai_mode[user_id] = True
-            await query.edit_message_text(
-                "🤖 AI 对话模式已开启！\n"
-                "现在你可以直接发送任何消息，我会调用 AI 回复你。\n"
-                "输入 /cancel 可退出对话模式。"
-            )
+    if data == "help":
+        help_text = (
+            "📖 *帮助信息*\n\n"
+            "• 点击上方广告按钮可直接跳转对应频道/群组。\n"
+            "• 如需联系客服，请点击「📞 联系客服」。\n"
+            "• 有任何问题，欢迎随时反馈。"
+        )
+        await query.edit_message_text(help_text, parse_mode="Markdown")
     else:
         await query.edit_message_text("功能开发中...")
 
 # ========== 普通消息处理 ==========
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = get_user_id(update)
-    chat_type = update.effective_chat.type
-    text = update.message.text.strip()
-
-    # 处理 /cancel 命令（私聊）
-    if text == "/cancel" and user_id in ai_mode:
-        del ai_mode[user_id]
-        await update.message.reply_text("已退出 AI 对话模式。")
-        return
-
-    # 私聊模式：如果用户处于 AI 模式，则调用 AI
-    if chat_type == "private" and user_id in ai_mode:
-        await ai_chat(update, context, text)
-        return
-
-    # 群组模式：仅处理 /ai 命令
-    if chat_type in ["group", "supergroup"] and text.startswith("/ai"):
-        query = text[4:].strip()
-        if not query:
-            await update.message.reply_text("请提供问题，例如 /ai 你好")
-            return
-        await ai_chat(update, context, query)
-        return
-
-    # 其他情况：提示使用 /start
+    # 除命令外，其他消息统一提示使用 /start
     await update.message.reply_text("请使用 /start 查看菜单。")
 
 # ========== 错误处理 ==========
