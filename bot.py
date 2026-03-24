@@ -1,3 +1,20 @@
+# -*- coding: utf-8 -*-
+"""
+================================================
+   Telegram 全能机器人 - 乐天USDT
+   功能：广告按钮 + AI 智能对话
+   部署说明：
+     1. 确保 Railway 环境变量中设置：
+        - TELEGRAM_TOKEN（必填）
+        - OPENAI_API_KEY（可选，如需 AI）
+     2. 确保 requirements.txt 包含：
+        python-telegram-bot>=21.10
+        aiohttp>=3.10.5
+     3. 在 Railway 的 Settings 中设置 Start Command 为：
+        python bot.py
+     4. 部署后，向机器人发送 /start 即可使用。
+================================================
+"""
 import os
 import logging
 import asyncio
@@ -43,7 +60,6 @@ async def ai_chat(update: Update, context: ContextTypes.DEFAULT_TYPE, query: str
                     error = data["error"]
                     error_code = error.get("code")
                     error_msg = error.get("message", "")
-                    # 常见错误：额度不足、密钥无效等
                     if error_code == "insufficient_quota" or "quota" in error_msg.lower():
                         await update.message.reply_text("⚠️ AI 服务配额已用完，请联系我的主人补充。")
                     else:
@@ -51,20 +67,18 @@ async def ai_chat(update: Update, context: ContextTypes.DEFAULT_TYPE, query: str
                     return
                 reply = data["choices"][0]["message"]["content"]
                 await update.message.reply_text(reply)
-    except aiohttp.ClientError as e:
-        # 网络问题
+    except aiohttp.ClientError:
         await update.message.reply_text("⚠️ 网络连接异常，AI 服务暂时不可用，请联系我的主人。")
     except Exception as e:
-        # 其他未知错误
         logging.error(f"AI 调用异常: {e}")
         await update.message.reply_text("⚠️ AI 服务暂时不可用，请联系我的主人。")
 
-# ========== 主菜单（广告按钮） ==========
+# ========== 主菜单（优化后的两列广告按钮布局） ==========
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
-        # 新闻频道
+        # 第一行：新闻频道（单个按钮，居中）
         [InlineKeyboardButton("📰 天游国际", url="https://t.me/tianyouguoji")],
-        # 娱乐城广告
+        # 第二行开始两列排列
         [InlineKeyboardButton("天游国际", url="https://t.me/example1"),
          InlineKeyboardButton("天游国际", url="https://t.me/example2")],
         [InlineKeyboardButton("天游国际", url="https://t.me/example3"),
@@ -82,11 +96,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("天游国际", url="https://t.me/example15"),
          InlineKeyboardButton("天游国际", url="https://t.me/example16")],
         [InlineKeyboardButton("天游国际", url="https://t.me/example17"),
-         InlineKeyboardButton("5天游国际", url="https://t.me/example18")],
-        [InlineKeyboardButton("N9国际N9.COM", url="https://t.me/example19"),
-         InlineKeyboardButton("天游国际", url="https://t.me/example20")],
-        [InlineKeyboardButton("2028大额出款无忧", url="https://t.me/example21"),
-         InlineKeyboardButton("7T.com全球公认最稳", url="https://t.me/example22")],
+         InlineKeyboardButton("天游国际", url="https://t.me/example18")],
+        [InlineKeyboardButton("乐天USDT", url="https://t.me/ltusdt888"),
+         InlineKeyboardButton("乐天USDT", url="https://t.me/ltusdt888")],
+        [InlineKeyboardButton("乐天USDT", url="https://t.me/ltusdt888"),
+         InlineKeyboardButton("乐天USDT", url="https://t.me/ltusdt888")],
         [InlineKeyboardButton("乐天USDT", url="https://t.me/ltusdt888")],
         # 功能按钮（AI + 客服）
         [InlineKeyboardButton("🤖 AI 对话", callback_data="ai_mode"),
@@ -108,7 +122,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=reply_markup
     )
 
-# ========== 回调处理（仅处理 AI 模式） ==========
+# ========== 回调处理 ==========
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     data = query.data
@@ -126,7 +140,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await query.edit_message_text("功能开发中...")
 
-# ========== 普通消息处理（私聊 AI 模式 + 群组命令） ==========
+# ========== 普通消息处理 ==========
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = get_user_id(update)
     chat_type = update.effective_chat.type
@@ -149,7 +163,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not query:
             await update.message.reply_text("请提供问题，例如 /ai 你好")
             return
-        # 引用原消息回复
         await ai_chat(update, context, query)
         return
 
