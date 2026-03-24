@@ -852,8 +852,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             InlineKeyboardButton("🤲 抢USDT红包", callback_data="grab_usdt_redpacket"),
         ],
         [
-            InlineKeyboardButton("🌐 加入频道", url="https://t.me/你的频道"),
-            InlineKeyboardButton("📘 使用教程", url="https://你的教程链接"),
+            InlineKeyboardButton("🌐 加入频道", url="https://t.me/ltusdt888"),
+            InlineKeyboardButton("📘 使用教程", url="https://t.me/Gengnianqing"),
         ],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
